@@ -1,18 +1,11 @@
 // Importa o SDK do Mercado Pago
 import mercadopago from 'mercadopago';
 
-// Pega seu Access Token do Mercado Pago das variáveis de ambiente da Vercel
-// IMPORTANTE: Você deve configurar esta variável no painel do seu projeto na Vercel.
-const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
-
-if (accessToken) {
-    mercadopago.configure({
-        access_token: accessToken,
-    });
-}
-
 // Esta é a função que a Vercel executará quando o endpoint /api/create-payment for chamado
 export default async function handler(request, response) {
+    // Pega seu Access Token do Mercado Pago das variáveis de ambiente
+    const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
+
     // Permite apenas requisições do tipo POST
     if (request.method !== 'POST') {
         response.setHeader('Allow', 'POST');
@@ -25,11 +18,16 @@ export default async function handler(request, response) {
         return response.status(500).json({ error: 'Erro de configuração do servidor.' });
     }
 
+    // Configura o SDK dentro do handler para garantir que sempre use o token mais recente
+    mercadopago.configure({
+        access_token: accessToken,
+    });
+
     try {
-        const { name, email, cpf, modality } = request.body;
+        const { name, email, cpf, modality, shirt_size } = request.body;
 
         // Validação básica dos dados recebidos
-        if (!name || !email || !cpf || !modality) {
+        if (!name || !email || !cpf || !modality || !shirt_size) {
             return response.status(400).json({ error: 'Dados do formulário incompletos.' });
         }
 
@@ -37,8 +35,8 @@ export default async function handler(request, response) {
         const preference = {
             items: [
                 {
-                    title: `Inscrição Cross Run 1 Ano - ${modality}`,
-                    description: 'Kit comemorativo do atleta',
+                    title: `Inscrição Cross Run - ${modality}`,
+                    description: `Kit do atleta com camisa tamanho ${shirt_size}`,
                     quantity: 1,
                     currency_id: 'BRL',
                     unit_price: 75.00 // <-- MUDE AQUI o valor da inscrição, se necessário
@@ -52,11 +50,13 @@ export default async function handler(request, response) {
                     number: cpf.replace(/\D/g, '') // Remove pontos e traços do CPF
                 }
             },
+            // URLs de redirecionamento dinâmicas usando variáveis de ambiente da Vercel
+            // Isso funciona tanto em produção (https) quanto em previews de deploy.
+            // Você precisará criar os arquivos sucesso.html, falha.html, etc., na pasta /public
             back_urls: {
-                // IMPORTANTE: Substitua 'seu-dominio.vercel.app' pelo seu domínio final após o deploy
-                success: 'https://seu-dominio.vercel.app/sucesso.html',
-                failure: 'https://seu-dominio.vercel.app/falha.html',
-                pending: 'https://seu-dominio.vercel.app/pendente.html'
+                success: `https://${process.env.VERCEL_URL}/sucesso.html`,
+                failure: `https://${process.env.VERCEL_URL}/falha.html`,
+                pending: `https://${process.env.VERCEL_URL}/pendente.html`
             },
             auto_return: 'approved',
         };
