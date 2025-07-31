@@ -1,0 +1,11 @@
+{
+  "name": "crossrun-landing-page",
+  "version": "1.0.0",
+  "description": "Landing page e backend para a corrida Cross Run",
+  "main": "index.js",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "mercadopago": "^2.0.10"
+  }
+}
