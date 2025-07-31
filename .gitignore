@@ -3,3 +3,4 @@
 
 # Ignorar arquivos de ambiente local que contêm segredos
 .env.local
+.vercel
